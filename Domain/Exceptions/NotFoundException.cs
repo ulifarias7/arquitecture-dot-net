@@ -1,5 +1,4 @@
-﻿using Domain.Exception;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Domain.Exceptions
 {
-    public class NotFoundException : BaseException
+    public class NotFoundException : Exception
     {
-        public NotFoundException(string message) : base(message, 404, "NOT_FOUND")
+        public NotFoundException() : base("NotFoundException")
         {
         }
-        public NotFoundException(string message, System.Exception innerException) : base(message, 404, "NOT_FOUND", innerException)
+        public NotFoundException(string name) : base(name)
         {
         }
     }

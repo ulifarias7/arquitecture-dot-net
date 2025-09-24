@@ -27,8 +27,9 @@
 </ItemGroup>
 
 <ItemGroup>
-  <Folder Include="Common\Swaggers\" />
-  <Folder Include="Ports\Primary\External\" />
+  <Folder Include="Common\Swaggers\Atribute\" />
+  <Folder Include="Common\Swaggers\Examples\" />
+  <Folder Include="Common\Swaggers\Filters\" />
   <Folder Include="UseCases\Users\Comannd\" />
 </ItemGroup>
 

@@ -36,7 +36,7 @@ namespace Application.UseCases.Users.Queries
             {
                 Code = 200,
                 Message = "User retrieved successfully",
-                Responses = System.Text.Json.JsonSerializer.Serialize(user)
+                Responses = user
             };
         }
     }

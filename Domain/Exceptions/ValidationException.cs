@@ -1,6 +1,6 @@
-﻿using Domain.Exception;
-using FluentValidation.Results;
+﻿using FluentValidation.Results;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,12 +8,9 @@ using System.Threading.Tasks;
 
 namespace Domain.Exceptions
 {
-    public class ValidationException : BaseException
+    public class ValidationException : Exception
     {
-        public IDictionary<string, string[]> Errors { get; }
-
-        public ValidationException()
-            : base("Se han producido uno o más errores de validación.", 422, "VALIDATION_ERROR")
+        public ValidationException() : base("no funciona pa")
         {
             Errors = new Dictionary<string, string[]>();
         }
@@ -22,8 +19,9 @@ namespace Domain.Exceptions
             : this()
         {
             Errors = failures
-                .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
+                .GroupBy(e => e.PropertyName.ToLower(), e => e.ErrorMessage)
                 .ToDictionary(failureGroup => failureGroup.Key, failureGroup => failureGroup.ToArray());
         }
+        public IDictionary<string, string[]> Errors { get; }
     }
 }

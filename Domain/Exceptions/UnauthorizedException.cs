@@ -1,18 +1,16 @@
-﻿using Domain.Exception;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.Exceptions
 {
-    public class UnauthorizedException : BaseException
+    public class UnauthorizedException : Exception
     {
-        public UnauthorizedException(string message) : base(message, 401, "UNAUTHORIZED")
+        public UnauthorizedException() : base("UnauthorizedException")
         {
         }
-        public UnauthorizedException(string message, System.Exception innerException) : base(message, 401, "UNAUTHORIZED", innerException)
+        public UnauthorizedException(string name) : base(name)
         {
         }
     }

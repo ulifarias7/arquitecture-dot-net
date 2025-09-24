@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Common.Behaviors;
 using FluentValidation;
+using Application.Common.Middleware;
 
 namespace Application
 {
@@ -16,15 +17,20 @@ namespace Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // Registrar MediatR para CQRS
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+            // Registrar MediatR para CQRS debe ir el exception , validation y authorize
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+                cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+                //cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuthorizationBahevior<,>));
+                cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ExceptionMiddleware<,>));
+            });
 
             //Registrar validators de FluentValidation
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-            //Registrar behaviors de MediatR
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            //Registrar behaviors de MediatR se ejecuta despues del middleware HTTP antes de ejecutar hanlder
+            //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
             // AutoMapper
             services.AddAutoMapper(cfg => cfg.AddMaps(Assembly.GetExecutingAssembly()));

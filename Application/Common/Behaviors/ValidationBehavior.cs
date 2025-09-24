@@ -1,5 +1,7 @@
 ﻿using FluentValidation;
 using MediatR;
+using Microsoft.Build.Framework;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +11,15 @@ using System.Threading.Tasks;
 namespace Application.Common.Behaviors
 {
     public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-      where TRequest : IRequest<TResponse>
+      where TRequest : notnull
     {
         private readonly IEnumerable<IValidator<TRequest>> _validators;
+        private readonly ILogger<TRequest> _logger;
 
-        public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
+        public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators, ILogger<TRequest> logger)
         {
             _validators = validators;
+            _logger = logger;
         }
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -25,7 +29,8 @@ namespace Application.Common.Behaviors
                 var context = new ValidationContext<TRequest>(request);
 
                 var validationResults = await Task.WhenAll(
-                    _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+                    _validators.Select(v =>
+                    v.ValidateAsync(context, cancellationToken)));
 
                 var failures = validationResults
                     .Where(r => r.Errors.Any())
@@ -33,7 +38,14 @@ namespace Application.Common.Behaviors
                     .ToList();
 
                 if (failures.Any())
-                    throw new ValidationException(failures);
+                {
+                    _logger.LogError("Failures: \n");
+                    foreach (var item in failures) 
+                    {
+                        _logger.LogError(item.ErrorMessage);
+                    }
+                    throw new Exception($"{failures}");
+                }
             }
 
             return await next();

@@ -1,6 +1,6 @@
 ﻿using Application.Common.Models;
-using Domain.Exception;
 using Domain.Exceptions;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,101 +13,61 @@ using System.Threading.Tasks;
 
 namespace Application.Common.Middleware
 {
-    public class ExceptionMiddleware
+    public class ExceptionMiddleware<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
     {
-        private readonly RequestDelegate _next;
-        private readonly ILogger<ExceptionMiddleware> _logger;
-
-        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
-        {
-            _next = next;
-            _logger = logger;
-        }
-        public async Task Invoke(HttpContext context)
+        public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
             try
             {
-                await _next(context);
+                return await next();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error capturado en el middleware: {Message}", ex.Message);
+                var req = typeof(TRequest).Name;
 
-                await HandleExceptionAsync(context, ex);
+                var response = new ResponseObjectJson();
+
+                switch (ex)
+                {
+                    case BadRequestException:
+                        response.Code = (int)HttpStatusCode.BadRequest;
+                        response.Message = ex.Message;
+                        break;
+                    case NotFoundException:
+                        response.Code = (int)HttpStatusCode.NotFound;
+                        response.Message = ex.Message;
+                        break;
+                    case ForbiddenException:
+                        response.Code = (int)HttpStatusCode.Forbidden;
+                        response.Message = ex.Message;
+                        break;
+                    case UnauthorizedException:
+                        response.Code = (int)HttpStatusCode.Unauthorized;
+                        response.Message = ex.Message;
+                        break;
+                    case ValidationException vex:
+                        if (vex.Errors.ContainsKey("configuration"))
+                        {
+                            List<string> values = vex.Errors["configuration"].ToList();
+                        }
+                        response.Code = (int)HttpStatusCode.BadRequest;
+                        response.Message = "ERROR";
+                        response.Message = vex.Message;
+                        break;
+                    default:
+                        response.Code = (int)HttpStatusCode.InternalServerError;
+                        response.Message = ex.Message;
+                        break;
+                }
+                return (TResponse)Convert.ChangeType(response, typeof(TResponse));
             }
-        }
-
-        private async Task HandleExceptionAsync(HttpContext context, Exception ex)
-        {
-            context.Response.ContentType = "application/json";
-
-            var response = new ResponseObjectJson
-            {
-                Code = (int)HttpStatusCode.InternalServerError,
-                Message = "Ha ocurrido un error inesperado.",
-                Responses = null
-            };
-
-            switch (ex)
-            {
-
-
-                case BaseException baseEx:
-                    response.Code = baseEx.StatusCode;
-                    response.Message = baseEx.Message;
-                    response.Responses = new { ErrorCode = baseEx.ErrorCode };
-                    break;
-
-                case FluentValidation.ValidationException fluentValidationEx:
-                    response.Code = 422;
-                    response.Message = "Errores de validación.";
-                    response.Responses = new
-                    {
-                        Errors = fluentValidationEx.Errors
-                            .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
-                            .ToDictionary(g => g.Key, g => g.ToArray())
-                    };
-                    break;
-
-                case UnauthorizedAccessException:
-                    response.Code = 401;
-                    response.Message = "No autorizado.";
-                    break;
-
-                case ArgumentException argEx:
-                    response.Code = 400;
-                    response.Message = argEx.Message;
-                    break;
-
-                case KeyNotFoundException:
-                    response.Code = 404;
-                    response.Message = "Recurso no encontrado.";
-                    break;
-
-                case TimeoutException:
-                    response.Code = 408;
-                    response.Message = "La operación ha expirado.";
-                    break;
-
-                default:
-                    _logger.LogError(ex, "Error no controlado: {Message}", ex.Message);
-                    response.Code = 500;
-                    response.Message = "Ha ocurrido un error interno del servidor.";
-                    break;
-            }
-
-            context.Response.StatusCode = response.Code;
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            };
-
-            var jsonResponse = JsonSerializer.Serialize(response, options);
-            await context.Response.WriteAsync(jsonResponse);
         }
     }
-} 
-    
-
+}
+//vivie en el pipeline de HTTP , cuando se ejecuta el servidor el http desde que llega al servidor hasta que devuelve la respuesta 
+//sirve para logica transversal a toda la api 
+//ejemplos parecidos a este 
+//Authenticacion/authorizacion
+//loggin de request/response
+//manejo global de exceptiones(la configuracion de este archivo)
+//CORS , Comprension , Routing

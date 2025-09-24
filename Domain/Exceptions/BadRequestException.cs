@@ -1,5 +1,4 @@
-﻿using Domain.Exception;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace Domain.Exceptions
 {
-   public class BadRequestException : BaseException
+    public class BadRequestException : Exception
     {
-        public BadRequestException(string message)  : base(message, 400, "BAD_REQUEST")
+        public BadRequestException() : base("BadRequestException")
         {
         }
 
-        public BadRequestException(string message, System.Exception innerException): base(message, 400, "BAD_REQUEST", innerException)
+        public BadRequestException(string name) : base(name)
         {
         }
     }

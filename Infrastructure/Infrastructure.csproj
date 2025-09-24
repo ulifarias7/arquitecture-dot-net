@@ -26,10 +26,4 @@
 	<ProjectReference Include="..\Domain\Domain.csproj" />
 </ItemGroup>
 
-<ItemGroup>
-  <Folder Include="Adapters\Primary\External\" />
-  <Folder Include="EventBus\" />
-  <Folder Include="Persistence\Migrations\" />
-</ItemGroup>
-
 </Project>
